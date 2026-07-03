@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/static/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <title>一键请求查看 · HuTu</title>
+  <link rel="stylesheet" href="/static/css/common.css">
+  <link rel="stylesheet" href="/static/css/tool.css">
+  <link rel="stylesheet" href="/static/css/request-local.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="site-logo" href="/">HuTu</a>
+      <nav class="site-nav">
+        <a class="nav-item" href="/">← 返回首页</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container container-wide">
+    <div class="tool-header">
+      <h1>一键请求查看</h1>
+      <p class="subtitle">粘贴 curl 解析参数，发送后自动下载并打开文件（Excel、PDF 等）；可选转为本地请求</p>
+    </div>
+
+    <div class="port-bar request-view-options">
+      <label class="checkbox">
+        <input type="checkbox" id="use-local">
+        转为本地请求
+      </label>
+      <label class="port-inline" id="port-wrap">
+        端口
+        <input type="number" id="port" value="8000" min="1" max="65535" disabled>
+      </label>
+      <span class="port-hint" id="port-hint" hidden></span>
+      <button type="button" class="btn-primary btn-accent" id="paste-send-btn">一键粘贴并发送</button>
+    </div>
+
+    <div id="error" class="error" hidden></div>
+
+    <section class="request-preview-section" id="request-preview-section">
+      <div class="preview-section-header">
+        <h2>请求预览</h2>
+        <button type="button" class="btn-link" id="clear-preview">清空</button>
+      </div>
+
+      <div class="preview-request-bar">
+        <select id="preview-method" class="preview-method-select" title="请求方法"></select>
+        <input type="text" id="preview-url" class="preview-url-input" spellcheck="false"
+               placeholder="粘贴 curl 或输入 URL...">
+        <button type="button" class="btn-primary preview-send-btn" id="send-btn">发送并打开</button>
+      </div>
+
+      <div class="preview-tabs">
+        <button type="button" class="preview-tab active" data-preview-tab="params" id="preview-tab-params">Params</button>
+        <button type="button" class="preview-tab" data-preview-tab="headers" id="preview-tab-headers">Headers</button>
+        <button type="button" class="preview-tab" data-preview-tab="body">Body</button>
+      </div>
+
+      <div class="preview-panel" data-preview-panel="params">
+        <p class="preview-panel-label">Query Params</p>
+        <div class="preview-table-wrap">
+          <table class="preview-table">
+            <thead>
+              <tr>
+                <th width="36"></th>
+                <th>Key</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody id="preview-params-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="preview-panel" data-preview-panel="headers" hidden>
+        <p class="preview-panel-label">Headers</p>
+        <div class="preview-table-wrap">
+          <table class="preview-table">
+            <thead>
+              <tr>
+                <th width="36"></th>
+                <th>Key</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody id="preview-headers-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="preview-panel" data-preview-panel="body" hidden>
+        <div class="body-type-bar" id="body-type-bar">
+          <label class="body-type-option"><input type="radio" name="body-type" value="none" checked> none</label>
+          <label class="body-type-option"><input type="radio" name="body-type" value="form-data"> form-data</label>
+          <label class="body-type-option"><input type="radio" name="body-type" value="urlencoded"> x-www-form-urlencoded</label>
+          <label class="body-type-option"><input type="radio" name="body-type" value="raw"> raw</label>
+          <label class="body-type-option"><input type="radio" name="body-type" value="binary"> binary</label>
+          <label class="body-type-option"><input type="radio" name="body-type" value="graphql"> GraphQL</label>
+        </div>
+        <div class="body-sub-panel" id="body-panel-none">
+          <p class="body-none-hint">此请求没有 Body</p>
+        </div>
+        <div class="body-sub-panel" id="body-panel-form-data" hidden>
+          <div class="preview-table-wrap">
+            <table class="preview-table">
+              <thead><tr><th width="36"></th><th>Key</th><th>Value</th></tr></thead>
+              <tbody id="preview-formdata-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="body-sub-panel" id="body-panel-urlencoded" hidden>
+          <div class="preview-table-wrap">
+            <table class="preview-table">
+              <thead><tr><th width="36"></th><th>Key</th><th>Value</th></tr></thead>
+              <tbody id="preview-urlencoded-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="body-sub-panel" id="body-panel-raw" hidden>
+          <div class="raw-type-bar">
+            <label for="preview-raw-type">类型</label>
+            <select id="preview-raw-type">
+              <option value="json">JSON</option>
+              <option value="text">Text</option>
+              <option value="javascript">JavaScript</option>
+              <option value="html">HTML</option>
+              <option value="xml">XML</option>
+            </select>
+          </div>
+          <textarea id="preview-body-input" class="preview-body-input" spellcheck="false"
+                    placeholder="Raw body 内容"></textarea>
+        </div>
+        <div class="body-sub-panel" id="body-panel-binary" hidden>
+          <div class="binary-upload">
+            <input type="file" id="preview-binary-file">
+            <span class="binary-name" id="preview-binary-name">未选择文件</span>
+          </div>
+        </div>
+        <div class="body-sub-panel" id="body-panel-graphql" hidden>
+          <label class="graphql-label">Query</label>
+          <textarea id="preview-graphql-query" class="preview-body-input graphql-query" spellcheck="false"
+                    placeholder="GraphQL query"></textarea>
+          <label class="graphql-label">Variables (JSON)</label>
+          <textarea id="preview-graphql-vars" class="preview-body-input graphql-vars" spellcheck="false"
+                    placeholder="{}"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <section class="response-section">
+      <div class="response-header">
+        <h2>响应</h2>
+        <span class="status-badge" id="status-badge" hidden></span>
+        <span class="response-meta" id="response-meta"></span>
+      </div>
+
+      <div class="file-result" id="file-result" hidden>
+        <div class="file-result-icon" id="file-result-icon">📄</div>
+        <div class="file-result-info">
+          <p class="file-result-name" id="file-result-name"></p>
+          <p class="file-result-meta" id="file-result-meta"></p>
+        </div>
+        <div class="file-result-actions">
+          <button type="button" class="btn-secondary" id="open-file-btn">再次打开</button>
+          <button type="button" class="btn-secondary" id="download-file-btn">重新下载</button>
+        </div>
+      </div>
+
+      <div class="response-viewer-wrap" id="response-viewer">
+        <div class="response-viewer">
+          <div class="response-viewer-empty">文本响应将显示在这里；文件类响应会自动下载并尝试打开</div>
+          <div class="response-viewer-scroll" hidden>
+            <div class="response-viewer-lines"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Excel / Word 等由系统默认应用打开；PDF / 图片可在浏览器中查看</p>
+  </footer>
+
+  <script src="/static/js/curl-convert.js"></script>
+  <script src="/static/js/request-preview.js"></script>
+  <script src="/static/js/response-viewer.js"></script>
+  <script src="/static/js/request-send-ui.js"></script>
+  <script src="/static/js/request-view.js"></script>
+</body>
+</html>

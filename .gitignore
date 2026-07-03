@@ -1,0 +1,11 @@
+# Python / local dev artifacts
+__pycache__/
+venv/
+.venv/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+.cursor/

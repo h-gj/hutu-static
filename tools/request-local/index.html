@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/static/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <title>Request Local · HuTu</title>
+  <link rel="stylesheet" href="/static/css/common.css">
+  <link rel="stylesheet" href="/static/css/tool.css">
+  <link rel="stylesheet" href="/static/css/request-local.css">
+  <link rel="stylesheet" href="/static/css/markdown-reviewer.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="site-logo" href="/">HuTu</a>
+      <nav class="site-nav">
+        <a class="nav-item" href="/">← 返回首页</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container container-wide">
+    <div class="tool-header">
+      <h1>Request Local</h1>
+      <p class="subtitle">在地址栏粘贴 curl，自动转为本地请求并发送查看响应；支持分享链接</p>
+    </div>
+
+    <div class="md-share-bar" id="rl-share-bar" hidden>
+      <span class="md-share-label">分享链接</span>
+      <input type="text" class="md-share-url" id="rl-share-url" readonly spellcheck="false">
+      <button type="button" class="btn-link" id="copy-share-url">复制链接</button>
+      <span class="md-share-status" id="rl-share-status" hidden>已自动保存</span>
+    </div>
+
+    <!-- <p class="md-share-hint" id="rl-share-hint">配置好请求后点击「分享」生成链接；分享后修改会自动保存。</p> -->
+
+    <div class="port-bar">
+      <label for="port">默认端口</label>
+      <input type="number" id="port" value="8000" min="1" max="65535">
+      <button type="button" class="btn-secondary" id="open-mapping-btn">配置映射</button>
+      <span class="port-hint" id="port-hint" hidden></span>
+      <div class="port-bar-actions">
+        <button type="button" class="btn-primary btn-submit-dev" id="paste-submit-dev-btn">一键粘贴并提交</button>
+        <button type="button" class="btn-primary btn-accent" id="paste-send-btn">一键粘贴并发送</button>
+      </div>
+    </div>
+
+    <div id="error" class="error" hidden></div>
+
+    <section class="request-preview-section" id="request-preview-section">
+      <div class="preview-section-header">
+        <h2>请求预览</h2>
+        <div class="preview-section-actions">
+          <button type="button" class="btn-link" id="clear-preview">清空</button>
+          <button type="button" class="btn-link" id="share-request">分享</button>
+        </div>
+      </div>
+
+      <div class="preview-request-bar">
+        <select id="preview-method" class="preview-method-select" title="请求方法"></select>
+        <input type="text" id="preview-url" class="preview-url-input" spellcheck="false"
+               placeholder="粘贴 curl 或输入本地 URL...">
+        <button type="button" class="btn-primary preview-send-btn" id="send-btn">发送</button>
+      </div>
+
+      <div class="preview-tabs">
+        <button type="button" class="preview-tab active" data-preview-tab="params" id="preview-tab-params">Params</button>
+        <button type="button" class="preview-tab" data-preview-tab="headers" id="preview-tab-headers">Headers</button>
+        <button type="button" class="preview-tab" data-preview-tab="body">Body</button>
+      </div>
+
+      <div class="preview-panel" data-preview-panel="params">
+        <p class="preview-panel-label">Query Params</p>
+        <div class="preview-table-wrap">
+          <table class="preview-table">
+            <thead>
+              <tr>
+                <th width="36"></th>
+                <th>Key</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody id="preview-params-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="preview-panel" data-preview-panel="headers" hidden>
+        <p class="preview-panel-label">Headers</p>
+        <div class="preview-table-wrap">
+          <table class="preview-table">
+            <thead>
+              <tr>
+                <th width="36"></th>
+                <th>Key</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody id="preview-headers-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="preview-panel" data-preview-panel="body" hidden>
+        <div class="body-type-bar" id="body-type-bar">
+          <label class="body-type-option"><input type="radio" name="body-type" value="none" checked> none</label>
+          <label class="body-type-option"><input type="radio" name="body-type" value="form-data"> form-data</label>
+          <label class="body-type-option"><input type="radio" name="body-type" value="urlencoded"> x-www-form-urlencoded</label>
+          <label class="body-type-option"><input type="radio" name="body-type" value="raw"> raw</label>
+          <label class="body-type-option"><input type="radio" name="body-type" value="binary"> binary</label>
+          <label class="body-type-option"><input type="radio" name="body-type" value="graphql"> GraphQL</label>
+        </div>
+        <div class="body-sub-panel" id="body-panel-none">
+          <p class="body-none-hint">此请求没有 Body</p>
+        </div>
+        <div class="body-sub-panel" id="body-panel-form-data" hidden>
+          <div class="preview-table-wrap">
+            <table class="preview-table">
+              <thead><tr><th width="36"></th><th>Key</th><th>Value</th></tr></thead>
+              <tbody id="preview-formdata-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="body-sub-panel" id="body-panel-urlencoded" hidden>
+          <div class="preview-table-wrap">
+            <table class="preview-table">
+              <thead><tr><th width="36"></th><th>Key</th><th>Value</th></tr></thead>
+              <tbody id="preview-urlencoded-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="body-sub-panel" id="body-panel-raw" hidden>
+          <div class="raw-type-bar">
+            <label for="preview-raw-type">类型</label>
+            <select id="preview-raw-type">
+              <option value="json">JSON</option>
+              <option value="text">Text</option>
+              <option value="javascript">JavaScript</option>
+              <option value="html">HTML</option>
+              <option value="xml">XML</option>
+            </select>
+          </div>
+          <textarea id="preview-body-input" class="preview-body-input" spellcheck="false"
+                    placeholder="Raw body 内容"></textarea>
+        </div>
+        <div class="body-sub-panel" id="body-panel-binary" hidden>
+          <div class="binary-upload">
+            <input type="file" id="preview-binary-file">
+            <span class="binary-name" id="preview-binary-name">未选择文件</span>
+          </div>
+        </div>
+        <div class="body-sub-panel" id="body-panel-graphql" hidden>
+          <label class="graphql-label">Query</label>
+          <textarea id="preview-graphql-query" class="preview-body-input graphql-query" spellcheck="false"
+                    placeholder="GraphQL query"></textarea>
+          <label class="graphql-label">Variables (JSON)</label>
+          <textarea id="preview-graphql-vars" class="preview-body-input graphql-vars" spellcheck="false"
+                    placeholder="{}"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <section class="response-section">
+      <div class="response-header">
+        <h2>响应</h2>
+        <span class="status-badge" id="status-badge" hidden></span>
+        <span class="response-meta" id="response-meta"></span>
+        <button type="button" class="btn-link response-doc-btn" id="gen-api-doc-btn" title="生成 Markdown 接口文档">生成接口文档</button>
+      </div>
+      <div class="response-viewer-wrap" id="response-viewer">
+        <div class="response-viewer">
+          <div class="response-viewer-empty">响应内容将显示在这里</div>
+          <div class="response-viewer-scroll" hidden>
+            <div class="response-viewer-lines"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="history-section">
+      <div class="section-panel-tabs">
+        <button type="button" class="section-panel-tab active" data-panel="history">发送历史</button>
+        <button type="button" class="section-panel-tab" data-panel="feedback">测试提交</button>
+      </div>
+
+      <div class="history-header">
+        <p class="panel-desc" id="panel-desc">本地发送记录</p>
+        <button type="button" class="btn-secondary" id="clear-history">清空本地历史</button>
+      </div>
+      <div class="history-wrap">
+        <table class="history-table" id="history-table">
+          <thead id="history-thead"></thead>
+          <tbody id="history-tbody"></tbody>
+        </table>
+        <div class="history-empty" id="history-empty" hidden>暂无记录</div>
+      </div>
+      <div class="history-pagination" id="history-pagination" hidden>
+        <span class="history-page-info" id="history-page-info"></span>
+        <div class="history-page-btns">
+          <button type="button" class="btn-page" id="history-prev">上一页</button>
+          <button type="button" class="btn-page" id="history-next">下一页</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>请求通过 HuTu 服务转发至本地端口</p>
+  </footer>
+
+  <div class="modal-overlay" id="mapping-modal" hidden>
+    <div class="modal mapping-modal">
+      <div class="modal-header">
+        <h3>端口映射</h3>
+        <button type="button" class="modal-close" id="mapping-modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="mapping-desc">域名匹配时优先使用映射端口，未匹配则使用默认端口</p>
+        <div class="mapping-add">
+          <input type="text" id="map-domain" placeholder="域名，如 v8api.k0v.cn" spellcheck="false">
+          <input type="number" id="map-port" placeholder="端口" min="1" max="65535" value="8000">
+          <button type="button" class="btn-secondary" id="add-mapping">添加映射</button>
+        </div>
+        <div class="mapping-wrap">
+          <table class="mapping-table" id="mapping-table">
+            <thead>
+              <tr>
+                <th>域名</th>
+                <th width="100">本地端口</th>
+                <th width="80">操作</th>
+              </tr>
+            </thead>
+            <tbody id="mapping-tbody"></tbody>
+          </table>
+          <div class="mapping-empty" id="mapping-empty">暂无映射，将使用默认端口</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-primary" id="mapping-modal-done">完成</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="name-modal" hidden>
+    <div class="modal name-modal">
+      <div class="modal-header">
+        <h3>设置提交姓名</h3>
+        <button type="button" class="modal-close" id="name-modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="mapping-desc">提交给开发时需填写姓名，保存后下次自动使用</p>
+        <div class="form-row">
+          <label for="submitter-name">姓名</label>
+          <input type="text" id="submitter-name" placeholder="请输入你的姓名" maxlength="32">
+        </div>
+        <div id="name-modal-error" class="login-error" hidden></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-ghost" id="name-modal-cancel">取消</button>
+        <button type="button" class="btn-primary" id="name-modal-confirm">确认并提交</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/js/curl-convert.js"></script>
+  <script src="/static/js/request-preview.js"></script>
+  <script src="/static/js/response-viewer.js"></script>
+  <script src="/static/js/request-send-ui.js"></script>
+  <script src="/static/js/request-share.js" data-api="/api/request-local/share"></script>
+  <script src="/static/js/api-doc-generator.js"></script>
+  <script src="/static/js/request-local.js"></script>
+</body>
+</html>

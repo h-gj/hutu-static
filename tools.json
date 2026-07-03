@@ -1,0 +1,107 @@
+{
+  "categories": [
+    {"id": "all", "name": "全部"},
+    {"id": "format", "name": "数据格式"},
+    {"id": "text", "name": "文本工具"},
+    {"id": "dev", "name": "开发工具"},
+    {"id": "icgoo", "name": "icgoo工具"}
+  ],
+  "tools": [
+    {
+      "id": "dict-to-json",
+      "logo": "{}",
+      "title": "Dict to JSON",
+      "intro": "粘贴或编辑任一侧，Python 字典与 JSON 自动双向同步",
+      "jump_to": "/tools/dict-to-json/",
+      "category": "format"
+    },
+    {
+      "id": "json-viewer",
+      "logo": "{ }",
+      "title": "JSON Viewer",
+      "intro": "JSON 查看：语法高亮、折叠、查找替换、在线分享、格式化与粘贴",
+      "jump_to": "/tools/json-viewer/",
+      "category": "format"
+    },
+    {
+      "id": "sql-tool",
+      "logo": "SQL",
+      "title": "SQL 格式化",
+      "intro": "SQL 语句格式化与语法检测，支持 MySQL / PostgreSQL / SQLite 等方言",
+      "jump_to": "/tools/sql-tool/",
+      "category": "format"
+    },
+    {
+      "id": "online-editor",
+      "logo": "✎",
+      "title": "在线记事本",
+      "intro": "轻量在线记事本：进入即得随机短地址（如 /fsdf），编辑自动保存，复制链接即可分享",
+      "jump_to": "/tools/online-editor/",
+      "category": "text"
+    },
+    {
+      "id": "whiteboard",
+      "logo": "▣",
+      "title": "白板",
+      "intro": "在线白板：画笔、形状、橡皮擦，支持撤销重做、导出 PNG 与分享链接",
+      "jump_to": "/tools/whiteboard/",
+      "category": "text"
+    },
+    {
+      "id": "markdown-reviewer",
+      "logo": "M↓",
+      "title": "Markdown Reviewer",
+      "intro": "Markdown 编辑与实时预览，支持在线分享链接、同步滚动、复制 HTML",
+      "jump_to": "/tools/markdown-reviewer/",
+      "category": "text"
+    },
+    {
+      "id": "timestamp",
+      "logo": "⏱",
+      "title": "时间戳转换",
+      "intro": "Unix 时间戳与日期时间双向转换，支持秒/毫秒、本地/UTC，实时显示当前时间戳",
+      "jump_to": "/tools/timestamp/",
+      "category": "dev"
+    },
+    {
+      "id": "ip-query",
+      "logo": "IP",
+      "title": "IP 查询",
+      "intro": "查询 IP 地址归属地、WHOIS 等信息",
+      "jump_to": "https://whatsmyip.now/",
+      "category": "dev"
+    },
+    {
+      "id": "request-local",
+      "logo": "⇄",
+      "title": "Request Local",
+      "intro": "将线上 curl 转为本地请求，替换为 127.0.0.1 并直接发送查看响应",
+      "jump_to": "/tools/request-local/",
+      "category": "dev"
+    },
+    {
+      "id": "postbuman",
+      "logo": "⬡",
+      "title": "Postbuman",
+      "intro": "类似 Postman：地址栏粘贴 curl 直接发送，可编辑 Params / Headers / Body，不做端口映射",
+      "jump_to": "/tools/postbuman/",
+      "category": "dev"
+    },
+    {
+      "id": "request-view",
+      "logo": "↓",
+      "title": "一键请求查看",
+      "intro": "粘贴 curl 解析参数，发送后自动下载并打开文件（Excel、PDF 等），可选转为本地请求",
+      "jump_to": "/tools/request-view/",
+      "category": "dev"
+    },
+    {
+      "id": "cache",
+      "logo": "⚡",
+      "title": "清查缓存",
+      "intro": "查询与清理 icgoo 缓存：输入 key 一键查缓存或清缓存",
+      "jump_to": "/tools/cache/",
+      "category": "icgoo"
+    }
+  ]
+}

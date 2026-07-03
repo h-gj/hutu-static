@@ -16,6 +16,8 @@ const DEFAULT_PORT = 8000;
 const HISTORY_MAX = 100;
 const HISTORY_PAGE_SIZE = 20;
 const BODY_STORAGE_MAX = 8000;
+/** 团队 curl 提交（需 Python 后端）；静态站关闭 */
+const DEV_SUBMISSIONS_ENABLED = false;
 
 let history = [];
 let historyPage = 1;
@@ -571,6 +573,10 @@ function saveHistory() {
 }
 
 async function loadServerHistory() {
+  if (!DEV_SUBMISSIONS_ENABLED) {
+    serverHistory = [];
+    return;
+  }
   try {
     const res = await fetch('/api/request-local/dev-submissions');
     const data = await res.json();
@@ -585,6 +591,7 @@ async function loadServerHistory() {
 }
 
 function switchPanelTab(panel) {
+  if (panel === 'feedback' && !DEV_SUBMISSIONS_ENABLED) panel = 'history';
   activePanelTab = panel;
   document.querySelectorAll('.section-panel-tab').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.panel === panel);
@@ -954,6 +961,7 @@ function closeNameModal() {
 }
 
 async function doSubmitDev(curlText, submitterName) {
+  if (!DEV_SUBMISSIONS_ENABLED) return false;
   convertFromCurl(curlText);
 
   const res = await fetch('/api/request-local/submit-dev', {
@@ -1031,19 +1039,26 @@ async function confirmNameAndSubmit() {
   }
 }
 
-document.getElementById('name-modal-confirm').addEventListener('click', confirmNameAndSubmit);
-document.getElementById('name-modal-close').addEventListener('click', closeNameModal);
-document.getElementById('name-modal-cancel').addEventListener('click', closeNameModal);
-nameModal.addEventListener('click', (e) => {
+document.getElementById('name-modal-confirm')?.addEventListener('click', confirmNameAndSubmit);
+document.getElementById('name-modal-close')?.addEventListener('click', closeNameModal);
+document.getElementById('name-modal-cancel')?.addEventListener('click', closeNameModal);
+nameModal?.addEventListener('click', (e) => {
   if (e.target === nameModal) closeNameModal();
 });
-submitterNameInput.addEventListener('keydown', (e) => {
+submitterNameInput?.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') confirmNameAndSubmit();
 });
 
+function disableDevSubmissionUi() {
+  if (DEV_SUBMISSIONS_ENABLED) return;
+  document.querySelector('.section-panel-tab[data-panel="feedback"]')?.remove();
+  document.getElementById('paste-submit-dev-btn')?.remove();
+  document.getElementById('name-modal')?.remove();
+}
+
 document.getElementById('send-btn').addEventListener('click', sendRequest);
 document.getElementById('paste-send-btn').addEventListener('click', pasteAndSend);
-document.getElementById('paste-submit-dev-btn').addEventListener('click', pasteAndSubmitDev);
+document.getElementById('paste-submit-dev-btn')?.addEventListener('click', pasteAndSubmitDev);
 document.getElementById('gen-api-doc-btn').addEventListener('click', generateApiDoc);
 shareRequestBtn?.addEventListener('click', () => shareDocument());
 document.getElementById('copy-share-url')?.addEventListener('click', () => {
@@ -1145,7 +1160,8 @@ document.getElementById('history-next').addEventListener('click', () => {
 loadPort();
 loadPortMappings();
 loadHistory();
-loadServerHistory();
+disableDevSubmissionUi();
+if (DEV_SUBMISSIONS_ENABLED) loadServerHistory();
 
 RequestSendUI.init();
 

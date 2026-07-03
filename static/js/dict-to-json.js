@@ -24,13 +24,8 @@ function hideError() {
   errorEl.hidden = true;
 }
 
-async function apiConvert(text, direction) {
-  const res = await fetch('/api/dict-to-json/convert', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, direction }),
-  });
-  return res.json();
+function convertLocal(text, direction) {
+  return DictConvert.convert(text, direction);
 }
 
 async function syncFromDict() {
@@ -45,7 +40,7 @@ async function syncFromDict() {
       return;
     }
 
-    const data = await apiConvert(text, 'to_json');
+    const data = convertLocal(text, 'to_json');
     if (data.ok) {
       jsonPanel.setValue(data.result);
       hideError();
@@ -53,7 +48,7 @@ async function syncFromDict() {
       showError(data.error);
     }
   } catch {
-    showError('请求失败，请确认服务已启动');
+    showError('转换失败');
   } finally {
     syncing = false;
   }
@@ -72,7 +67,7 @@ async function syncFromJson() {
       return;
     }
 
-    const data = await apiConvert(text, 'to_dict');
+    const data = convertLocal(text, 'to_dict');
     if (data.ok) {
       input.value = data.result;
       dictEditor?.updateLines();
@@ -81,7 +76,7 @@ async function syncFromJson() {
       showError(data.error);
     }
   } catch {
-    showError('请求失败，请确认服务已启动');
+    showError('转换失败');
   } finally {
     syncing = false;
   }

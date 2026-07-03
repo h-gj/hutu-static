@@ -105,10 +105,25 @@ const CurlConvert = (() => {
     return { text: raw, body: null };
   }
 
+  /** Windows CMD/DevTools: curl ^"url^" ^ with caret escapes. */
+  function normalizeWindowsCurl(text) {
+    if (!/\^"|\^%|\^\s*\r?\n/.test(text)) return text;
+
+    let t = text.replace(/^\uFEFF/, '');
+    t = t.replace(/\^\s*\r?\n/g, ' ');
+    t = t.replace(/\^%/g, '%');
+    t = t.replace(/\^\^/g, '\u0000');
+    t = t.replace(/\^\\/g, '\\');
+    t = t.replace(/\^"/g, '"');
+    t = t.replace(/\^([^\s])/g, '$1');
+    return t.replace(/\u0000/g, '^');
+  }
+
   function normalizeCurlText(text) {
     let t = text.trim();
+    t = normalizeWindowsCurl(t);
     if (t.toLowerCase().startsWith('curl')) t = t.slice(4).trim();
-    t = t.replace(/\\\s*\n/g, ' ');
+    t = t.replace(/\\\s*\r?\n/g, ' ');
     const extracted = extractEmbeddedBody(t);
     t = extracted.text.replace(/\s+/g, ' ');
     return { normalized: t, extractedBody: extracted.body };
@@ -121,11 +136,22 @@ const CurlConvert = (() => {
 
     for (let i = 0; i < text.length; i++) {
       const c = text[i];
-      if (quote) {
-        if (c === quote) quote = null;
+      if (quote === '"') {
+        if (c === '\\' && i + 1 < text.length) {
+          current += text[i + 1];
+          i += 1;
+        } else if (c === '"') {
+          quote = null;
+        } else {
+          current += c;
+        }
+      } else if (quote === "'") {
+        if (c === "'") quote = null;
         else current += c;
-      } else if (c === '"' || c === "'") {
-        quote = c;
+      } else if (c === '"') {
+        quote = '"';
+      } else if (c === "'") {
+        quote = "'";
       } else if (c === ' ') {
         if (current) {
           parts.push(current);

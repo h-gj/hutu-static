@@ -14,6 +14,7 @@ const DEBOUNCE_MS = 250;
 let syncing = false;
 let dictTimer = null;
 let jsonTimer = null;
+let jsonUserEdited = false;
 
 function showError(msg) {
   errorEl.textContent = msg;
@@ -61,11 +62,16 @@ async function syncFromJson() {
   syncing = true;
   try {
     if (!text.trim()) {
-      input.value = '';
-      dictEditor?.updateLines();
+      if (jsonUserEdited) {
+        input.value = '';
+        dictEditor?.updateLines();
+        jsonUserEdited = false;
+      }
       hideError();
       return;
     }
+
+    jsonUserEdited = false;
 
     const data = convertLocal(text, 'to_dict');
     if (data.ok) {
@@ -94,6 +100,7 @@ function scheduleSyncFromJson() {
 
 function clearAll() {
   syncing = true;
+  jsonUserEdited = false;
   input.value = '';
   jsonPanel.clear();
   dictEditor?.updateLines();
@@ -101,13 +108,32 @@ function clearAll() {
   hideError();
 }
 
-function bindAutoSync(el, schedule) {
-  el.addEventListener('input', schedule);
-  el.addEventListener('paste', schedule);
+function bindDictAutoSync() {
+  const run = () => scheduleSyncFromDict();
+  input.addEventListener('input', run);
+  input.addEventListener('paste', () => {
+    run();
+    clearTimeout(dictTimer);
+    dictTimer = setTimeout(syncFromDict, 0);
+  });
 }
 
-bindAutoSync(input, scheduleSyncFromDict);
-bindAutoSync(jsonPanel.textEl, scheduleSyncFromJson);
+function bindJsonAutoSync() {
+  const run = () => {
+    jsonUserEdited = true;
+    scheduleSyncFromJson();
+  };
+  jsonPanel.textEl.addEventListener('input', run);
+  jsonPanel.textEl.addEventListener('paste', () => {
+    jsonUserEdited = true;
+    run();
+    clearTimeout(jsonTimer);
+    jsonTimer = setTimeout(syncFromJson, 0);
+  });
+}
+
+bindDictAutoSync();
+bindJsonAutoSync();
 
 document.getElementById('clear-input').addEventListener('click', () => {
   clearAll();

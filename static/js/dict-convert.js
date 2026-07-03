@@ -14,8 +14,17 @@ const DictConvert = (() => {
   function pythonDictToJson(text) {
     const trimmed = text.trim();
     if (!trimmed) throw new Error('输入为空');
-    const value = parsePythonLiteral(trimmed);
-    return JSON.stringify(value, null, 2);
+    try {
+      const value = parsePythonLiteral(trimmed);
+      return JSON.stringify(value, null, 2);
+    } catch (pyErr) {
+      try {
+        const value = JSON.parse(trimmed);
+        return JSON.stringify(value, null, 2);
+      } catch {
+        throw pyErr;
+      }
+    }
   }
 
   function jsonToPythonDict(text) {
@@ -107,6 +116,12 @@ const DictConvert = (() => {
       if (m) { push('FALSE'); i += 5; continue; }
       m = rest.match(/^None\b/);
       if (m) { push('NONE'); i += 4; continue; }
+      m = rest.match(/^null\b/);
+      if (m) { push('NONE'); i += 4; continue; }
+      m = rest.match(/^true\b/);
+      if (m) { push('TRUE'); i += 4; continue; }
+      m = rest.match(/^false\b/);
+      if (m) { push('FALSE'); i += 5; continue; }
 
       m = rest.match(/^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/);
       if (m) {

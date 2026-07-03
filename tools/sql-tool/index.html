@@ -24,7 +24,7 @@
   <main class="container container-wide">
     <div class="tool-header">
       <h1>SQL 格式化与检测</h1>
-      <p class="subtitle">格式化 SQL 语句，并检测语法错误（基于 sqlglot 方言解析）</p>
+      <p class="subtitle">格式化 SQL 语句，并做基础语法结构检测（静态版使用浏览器端格式化）</p>
     </div>
 
     <div class="sql-options">
@@ -93,9 +93,11 @@
   </main>
 
   <footer class="site-footer">
-    <p>依赖 sqlparse（格式化）与 sqlglot（语法检测），首次使用请 pip install sqlparse sqlglot</p>
+    <p>浏览器端格式化 · 分享/笔记数据保存在本浏览器 localStorage</p>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/sql-formatter@15.4.6/dist/sql-formatter.min.js"></script>
+  <script src="/static/js/sql-format-client.js"></script>
   <script src="/static/js/sql-tool.js"></script>
 </body>
 </html>

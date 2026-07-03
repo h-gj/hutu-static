@@ -1,6 +1,6 @@
 (() => {
-  const DOC_ID_RE = /^[a-z0-9]{10,16}$/;
-  const API = '/api/whiteboard';
+  const DOC_ID_RE = StaticStorage.DOC_ID_RE;
+  const WB_NS = 'whiteboard';
   const SAVE_DEBOUNCE_MS = 800;
   const BG_COLOR = '#ffffff';
 
@@ -331,16 +331,11 @@
     saving = true;
     try {
       const content = { version: 1, background: BG_COLOR, strokes };
-      const res = await fetch(`${API}/${encodeURIComponent(boardId)}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
-      });
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error || '保存失败');
+      await StaticStorage.save(WB_NS, boardId, content);
       lastSavedJson = json;
       shareStatus.hidden = false;
       shareStatus.textContent = '已自动保存';
+      shareStatus.style.color = '#2a9d8f';
     } catch (err) {
       shareStatus.hidden = false;
       shareStatus.textContent = `保存失败: ${err.message}`;
@@ -359,14 +354,7 @@
     shareBtn.textContent = '生成中…';
     try {
       const content = { version: 1, background: BG_COLOR, strokes };
-      const res = await fetch(API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
-      });
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error || '创建失败');
-      boardId = data.id;
+      boardId = await StaticStorage.create(WB_NS, content);
       setPageUrl(boardId);
       lastSavedJson = snapshot();
       const fullUrl = buildPageUrl(boardId);
@@ -386,10 +374,7 @@
   async function loadBoard() {
     if (!boardId) return;
     try {
-      const res = await fetch(`${API}/${encodeURIComponent(boardId)}`);
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error || '加载失败');
-      const content = data.content || {};
+      const content = await StaticStorage.load(WB_NS, boardId);
       strokes = Array.isArray(content.strokes) ? content.strokes : [];
       undoStack = [];
       redoStack = [];

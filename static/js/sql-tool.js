@@ -65,19 +65,13 @@ async function run() {
   }
 
   try {
-    const res = await fetch('/api/sql-tool/process', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sql,
-        dialect: dialectSelect.value,
-        keyword_case: keywordCaseSelect.value,
-        indent: +indentSelect.value,
-        format: true,
-        validate: true,
-      }),
+    const data = SqlFormatClient.process(sql, {
+      dialect: dialectSelect.value,
+      keyword_case: keywordCaseSelect.value,
+      indent: +indentSelect.value,
+      format: true,
+      validate: true,
     });
-    const data = await res.json();
 
     if (!data.ok) {
       output.value = '';
@@ -90,7 +84,7 @@ async function run() {
     output.value = data.formatted || '';
     renderValidation(data.validation);
   } catch {
-    showApiError('请求失败，请确认 HuTu 服务已启动');
+    showApiError('处理失败');
     validationSection.hidden = true;
   }
 }

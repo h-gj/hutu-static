@@ -1,8 +1,10 @@
-/** Online share storage for request tool snapshots (Request Local / Postbuman). */
+/** Request snapshot share via localStorage (Request Local / Postbuman). */
 const RequestShare = (() => {
-  const DOC_ID_RE = /^[a-z0-9]{10,16}$/;
+  const DOC_ID_RE = StaticStorage.DOC_ID_RE;
 
   function forApi(api) {
+    const NS = StaticStorage.namespaceFromApi(api);
+
     function parseIdFromUrl() {
       const id = new URLSearchParams(window.location.search).get('id');
       return id && DOC_ID_RE.test(id) ? id : null;
@@ -25,32 +27,15 @@ const RequestShare = (() => {
     }
 
     async function create(content) {
-      const res = await fetch(api, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
-      });
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error || '创建失败');
-      return data.id;
+      return StaticStorage.create(NS, content);
     }
 
     async function load(id) {
-      const res = await fetch(`${api}/${encodeURIComponent(id)}`);
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error || '加载失败');
-      return data.content || {};
+      return StaticStorage.load(NS, id);
     }
 
     async function save(id, content) {
-      const res = await fetch(`${api}/${encodeURIComponent(id)}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
-      });
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error || '保存失败');
-      return data;
+      return StaticStorage.save(NS, id, content);
     }
 
     return {

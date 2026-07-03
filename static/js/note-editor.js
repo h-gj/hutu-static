@@ -11,7 +11,7 @@
   const textarea = document.getElementById('note-content');
   const saveStatus = document.getElementById('save-status');
   const pathEl = document.getElementById('note-path');
-  const apiUrl = `/api/notes/${encodeURIComponent(slug)}`;
+  const NOTE_NS = 'notes';
 
   pathEl.textContent = `/${slug}`;
 
@@ -33,11 +33,7 @@
     isLoading = true;
     setStatus('加载中…');
     try {
-      const res = await fetch(apiUrl);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error || '加载失败');
-      textarea.value = data.content || '';
+      textarea.value = await StaticStorage.loadText(NOTE_NS, slug);
       lastSavedContent = textarea.value;
       setStatus('');
     } catch (err) {
@@ -65,15 +61,7 @@
     setStatus('保存中…');
 
     try {
-      const res = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error || '保存失败');
-
+      await StaticStorage.saveText(NOTE_NS, slug, content);
       lastSavedContent = content;
       setStatus('已保存');
     } catch (err) {

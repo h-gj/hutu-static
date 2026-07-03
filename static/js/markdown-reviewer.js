@@ -11,7 +11,7 @@ const shareMdBtn = document.getElementById('share-md');
 const mdEditor = LineEditor.init(sourceEl, { dark: false });
 const sourceEditorWrap = sourceEl.closest('.line-editor');
 
-const DOC_ID_RE = /^[a-z0-9]{10,16}$/;
+const DOC_ID_RE = DocShare.DOC_ID_RE;
 const DEBOUNCE_MS = 120;
 const SAVE_DEBOUNCE_MS = 800;
 let renderTimer = null;
@@ -20,14 +20,11 @@ let syncingScroll = false;
 let docId = null;
 
 function getDocIdFromUrl() {
-  const id = new URLSearchParams(window.location.search).get('id');
-  return id && DOC_ID_RE.test(id) ? id : null;
+  return DocShare.parseIdFromUrl();
 }
 
 function buildShareUrl(id) {
-  const url = new URL(window.location.href);
-  url.search = `?id=${encodeURIComponent(id)}`;
-  return url.toString();
+  return DocShare.buildPageUrl(id);
 }
 
 function showShareBar(id) {
@@ -116,13 +113,8 @@ function scheduleSave() {
 async function saveDoc() {
   if (!docId) return;
   try {
-    const res = await fetch(`/api/markdown-doc/${encodeURIComponent(docId)}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: sourceEl.value }),
-    });
-    const data = await res.json();
-    if (data.ok && shareStatusEl) {
+    await DocShare.save(docId, sourceEl.value);
+    if (shareStatusEl) {
       shareStatusEl.hidden = false;
       clearTimeout(saveDoc._hideTimer);
       saveDoc._hideTimer = setTimeout(() => {
@@ -142,14 +134,7 @@ function applySourceText(text) {
 }
 
 async function createShareDoc() {
-  const res = await fetch('/api/markdown-doc', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content: sourceEl.value }),
-  });
-  const data = await res.json();
-  if (!data.ok) throw new Error(data.error || '创建分享失败');
-  return data.id;
+  return DocShare.create(sourceEl.value);
 }
 
 async function shareDocument(btn) {
@@ -181,16 +166,11 @@ async function shareDocument(btn) {
 }
 async function loadDocById(id) {
   try {
-    const res = await fetch(`/api/markdown-doc/${encodeURIComponent(id)}`);
-    const data = await res.json();
-    if (!data.ok) {
-      applySourceText(`# 加载失败\n\n${data.error || '文档不存在'}`);
-      return;
-    }
+    const content = await DocShare.load(id);
     setDocId(id);
-    applySourceText(data.content || '');
-  } catch {
-    applySourceText('# 加载失败\n\n无法连接服务器');
+    applySourceText(content || '');
+  } catch (err) {
+    applySourceText(`# 加载失败\n\n${err.message || '文档不存在'}`);
   }
 }
 
@@ -259,9 +239,7 @@ document.getElementById('clear-md').addEventListener('click', () => {
   updatePreview();
   docId = null;
   hideShareUi();
-  const cleanUrl = new URL(window.location.href);
-  cleanUrl.search = '';
-  history.replaceState(null, '', cleanUrl.toString());
+  DocShare.clearPageUrl();
   sourceEl.focus();
 });
 

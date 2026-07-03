@@ -1,7 +1,7 @@
-/** Shared online doc storage for Markdown / JSON viewer share links. */
+/** Doc share via localStorage (Markdown / JSON viewer). */
 const DocShare = (() => {
-  const DOC_ID_RE = /^[a-z0-9]{10,16}$/;
-  const API = '/api/markdown-doc';
+  const DOC_ID_RE = StaticStorage.DOC_ID_RE;
+  const NS = 'markdown-doc';
 
   function parseIdFromUrl() {
     const id = new URLSearchParams(window.location.search).get('id');
@@ -25,32 +25,15 @@ const DocShare = (() => {
   }
 
   async function create(content) {
-    const res = await fetch(API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content }),
-    });
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || '创建失败');
-    return data.id;
+    return StaticStorage.create(NS, content);
   }
 
   async function load(id) {
-    const res = await fetch(`${API}/${encodeURIComponent(id)}`);
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || '加载失败');
-    return data.content || '';
+    return StaticStorage.load(NS, id);
   }
 
   async function save(id, content) {
-    const res = await fetch(`${API}/${encodeURIComponent(id)}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content }),
-    });
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || '保存失败');
-    return data;
+    return StaticStorage.save(NS, id, content);
   }
 
   return {

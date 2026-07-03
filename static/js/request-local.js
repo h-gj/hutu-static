@@ -298,18 +298,9 @@ async function generateApiDoc() {
   const btn = document.getElementById('gen-api-doc-btn');
   btn.disabled = true;
   try {
-    const res = await fetch('/api/markdown-doc', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: markdown }),
-    });
-    const data = await res.json();
-    if (!data.ok) {
-      showError(data.error || '创建文档失败');
-      return;
-    }
+    const id = await DocShare.create(markdown);
     hideError();
-    window.open(data.url, '_blank');
+    window.open(`/tools/markdown-reviewer/?id=${encodeURIComponent(id)}`, '_blank');
   } catch {
     showError('创建文档失败');
   } finally {

@@ -230,14 +230,10 @@ function canOpenInBrowser(contentType) {
 }
 
 async function openFileWithSystem(base64, filename) {
-  const res = await fetch('/api/request-view/open-file', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ body: base64, filename }),
-  });
-  const data = await res.json();
-  if (!data.ok) throw new Error(data.error || '无法用系统应用打开文件');
-  return data.path;
+  const bytes = base64ToUint8Array(base64);
+  const blob = new Blob([bytes]);
+  downloadBlob(blob, filename);
+  return null;
 }
 
 async function openFileAuto(blob, contentType, base64, filename) {

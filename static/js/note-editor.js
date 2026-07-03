@@ -1,19 +1,10 @@
 (() => {
-  const SLUG_RE = /^[a-z0-9]{3,32}$/;
+  const NOTE_NS = 'notes';
+  const NOTE_ID = 'default';
   const SAVE_DEBOUNCE_MS = 600;
-
-  const slug = location.pathname.replace(/^\//, '').toLowerCase();
-  if (!SLUG_RE.test(slug)) {
-    location.replace('/tools/online-editor/');
-    return;
-  }
 
   const textarea = document.getElementById('note-content');
   const saveStatus = document.getElementById('save-status');
-  const pathEl = document.getElementById('note-path');
-  const NOTE_NS = 'notes';
-
-  pathEl.textContent = `/${slug}`;
 
   let isLoading = false;
   let lastSavedContent = '';
@@ -33,7 +24,7 @@
     isLoading = true;
     setStatus('加载中…');
     try {
-      textarea.value = await StaticStorage.loadText(NOTE_NS, slug);
+      textarea.value = await StaticStorage.loadText(NOTE_NS, NOTE_ID);
       lastSavedContent = textarea.value;
       setStatus('');
     } catch (err) {
@@ -61,7 +52,7 @@
     setStatus('保存中…');
 
     try {
-      await StaticStorage.saveText(NOTE_NS, slug, content);
+      await StaticStorage.saveText(NOTE_NS, NOTE_ID, content);
       lastSavedContent = content;
       setStatus('已保存');
     } catch (err) {
@@ -106,6 +97,15 @@
     } catch {
       setStatus('复制失败');
     }
+  });
+
+  document.getElementById('clear-note').addEventListener('click', () => {
+    if (textarea.value && !window.confirm('确定清空记事本内容？')) return;
+    textarea.value = '';
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    persistNote();
+    textarea.focus();
   });
 
   window.addEventListener('beforeunload', (e) => {

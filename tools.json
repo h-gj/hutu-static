@@ -35,7 +35,7 @@
       "id": "online-editor",
       "logo": "✎",
       "title": "在线记事本",
-      "intro": "轻量在线记事本：进入即得随机短地址（如 /fsdf），编辑自动保存，复制链接即可分享",
+      "intro": "轻量在线记事本，编辑自动保存到本浏览器",
       "jump_to": "/tools/online-editor/",
       "category": "text"
     },

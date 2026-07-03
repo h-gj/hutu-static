@@ -333,13 +333,7 @@ async function sendRequest() {
   const signal = RequestSendUI.createSignal();
 
   try {
-    const res = await fetch('/api/request-local/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ request: lastRequest, prefer_binary: true }),
-      signal,
-    });
-    const data = await res.json();
+    const data = await RequestClient.send(lastRequest, { signal, preferBinary: true });
 
     if (!data.ok) {
       setBadge('失败', 'err');

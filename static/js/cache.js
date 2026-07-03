@@ -53,18 +53,11 @@
   }
 
   async function sendRequest(url) {
-    const res = await fetch('/api/request-local/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        request: {
-          url,
-          method: 'GET',
-          headers: { accept: 'application/json, text/plain, */*' },
-        },
-      }),
+    return RequestClient.send({
+      url,
+      method: 'GET',
+      headers: { accept: 'application/json, text/plain, */*' },
     });
-    return res.json();
   }
 
   function displayResult(data) {
